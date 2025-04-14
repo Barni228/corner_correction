@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=3 uid="uid://dvof747ah0bvh"]
+
+[ext_resource type="PackedScene" uid="uid://ddhxh8aoopmq0" path="res://test/scenes/template.tscn" id="1_lhrir"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_i2jip"]
+size = Vector2(192, 64)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_csskn"]
+size = Vector2(128, 128)
+
+[node name="TestPixelPerfect" instance=ExtResource("1_lhrir")]
+
+[node name="Player" parent="." index="1"]
+position = Vector2(-192, 64)
+
+[node name="Area2D" parent="." index="2"]
+position = Vector2(-320, -128)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" index="0"]
+shape = SubResource("RectangleShape2D_i2jip")
+debug_color = Color(0, 0.6, 0, 0.419608)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." index="3"]
+position = Vector2(-448, -96)
+metadata/_edit_group_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" index="0"]
+shape = SubResource("RectangleShape2D_csskn")

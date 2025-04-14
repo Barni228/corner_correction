@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=3 uid="uid://b5m1jqaygjgwh"]
+
+[ext_resource type="PackedScene" uid="uid://ddhxh8aoopmq0" path="res://test/scenes/template.tscn" id="1_cxru3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wx5hj"]
+size = Vector2(32, 192)
+
+[node name="TestPolygon" instance=ExtResource("1_cxru3")]
+
+[node name="Player" parent="." index="1"]
+position = Vector2(-480, 0)
+
+[node name="Area2D" parent="." index="2"]
+position = Vector2(-288, -96)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" index="0"]
+shape = SubResource("RectangleShape2D_wx5hj")
+debug_color = Color(0, 0.6, 0, 0.419608)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." index="3"]
+position = Vector2(-288, 64)
+scale = Vector2(1, -1)
+metadata/_edit_group_ = true
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="StaticBody2D" index="0"]
+polygon = PackedVector2Array(-96, -64, 96, -64, 96, 64, -64, 64, -64, 32, -96, 32)

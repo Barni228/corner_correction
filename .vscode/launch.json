@@ -1,0 +1,41 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "GDScript: Launch Project",
+      "type": "godot",
+      "request": "launch",
+      "project": "${workspaceFolder}",
+      "debug_collisions": true,
+      "debug_paths": false,
+      "debug_navigation": false,
+      "additional_options": ""
+    },
+    {
+      "name": "📝 Run current test",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${env:GODOT}",
+      "args": [
+        // "--headless",
+        "-s",
+        "res://addons/gut/gut_cmdln.gd",
+        "--",
+        "-gconfig=res://.gutconfig.json",
+        // "-gdir",
+        // "res://test",
+        "-gselect",
+        // "-gunit_test_name",
+        "${fileBasenameNoExtension}"
+
+        // "-gexit"
+      ],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "console": "integratedTerminal"
+    }
+  ]
+}

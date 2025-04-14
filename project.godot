@@ -1,0 +1,37 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Corner Correction"
+run/main_scene="uid://bcwp2nob15a88"
+config/features=PackedStringArray("4.4", "Mobile")
+config/icon="res://icon.svg"
+
+[debug]
+
+gdscript/warnings/untyped_declaration=1
+
+[dotnet]
+
+project/assembly_name="Corner Correction"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/corner_correction/plugin.cfg", "res://addons/gut/plugin.cfg")
+
+[layer_names]
+
+2d_physics/layer_1="blocks"
+2d_physics/layer_2="player"
+
+[rendering]
+
+renderer/rendering_method="mobile"
