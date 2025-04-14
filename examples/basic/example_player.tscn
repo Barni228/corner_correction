@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://bobgxtgg81ew7"]
+
+[ext_resource type="Script" uid="uid://c3f3eebyv18xa" path="res://examples/basic/example_player.gd" id="1_r4nwi"]
+[ext_resource type="Texture2D" uid="uid://dno60vw3jpf6w" path="res://icon.svg" id="2_23jyl"]
+[ext_resource type="Script" uid="uid://cfs0wwl8fi625" path="res://addons/corner_correction/corner_correction.gd" id="3_aw742"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3k530"]
+size = Vector2(128, 128)
+
+[node name="ExamplePlayer" type="CharacterBody2D"]
+script = ExtResource("1_r4nwi")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_23jyl")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_3k530")
+
+[node name="CornerCorrection" type="Node" parent="." node_paths=PackedStringArray("character")]
+script = ExtResource("3_aw742")
+character = NodePath("..")
+ignore_sides = Array[int]([3])
+metadata/_custom_type_script = "uid://cfs0wwl8fi625"

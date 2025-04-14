@@ -1,11 +1,14 @@
 class_name CornerCorrection extends Node
 
-## maximum normal angle at which we will still corner correct
-## so if it is `0.1` and we hit something with normal `(0.1, 0.9)`,
+## Corner Correction Node
+
+
+## Maximum normal angle at which we will still corner correct.
+## So if it is `0.1` and we hit something with normal `(0.1, 0.9)`,
 ## we will still corner correct
 const norm_angle_max := 0.1
 
-## if player ignores bottom, and moves 80px down and 20px right (fall)
+## If player ignores bottom, and moves 80px down and 20px right (fall)
 ## and he hits corner of something to hit right (platform), should he:
 ## - hit it and just fall down, because he was moving mostly down (false)
 ## - corner correct and keep moving right, because he ignores bottom (true)
@@ -15,18 +18,18 @@ var ignore_is_special = false
 ## The character to move
 @export var character: CharacterBody2D
 
-## how much we can corner correct, in pixels
-## if it is 8, player can only move 8 pixels at maximum to corner correct
-## bigger values result in move noticeable corner correction, and 0 results in no corner correction at all
+## How much we can corner correct, in pixels.
+## If it is 8, player can only move 8 pixels at maximum to corner correct.
+## Bigger values result in move noticeable corner correction, and 0 results in no corner correction at all
 @export var corner_correction_amount: int = 8
 
-## Sides that will not have any corner correction
+## Sides that will not have any corner correction.
 ## For platformer games, you might want to ignore bottom (IgnoreSides = [Vector2.Down])
 ## so player does not fall down when he lands on an edge of a platform
 @export var ignore_sides: Array[Side] = []
 
-## This method behaves almost the same as `MoveAndSlide` but with corner correction
-## It will use `Velocity` to calculate movement
+## This method behaves almost the same as `move_and_slide` but with corner correction
+## It will use `velocity` to calculate movement
 func move_and_slide_corner(delta: float) -> void:
 	# move regularly
 	var collision = move_and_collide_corner(character.velocity * delta)
