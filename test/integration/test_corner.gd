@@ -19,7 +19,7 @@ func test_corner_with_ignore() -> void:
 	watch_signals(area)
 
 	# if we ignore collisions at the bottom, it shouldn't matter
-	player.corner_correction.ignore_sides = [SIDE_BOTTOM]
+	player.ignore_sides = [SIDE_BOTTOM]
 	input_sender.key_down(KEY_UP)
 	input_sender.key_down(KEY_RIGHT)
 	await wait_for_signal(area.body_entered, wait_time)

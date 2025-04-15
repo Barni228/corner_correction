@@ -14,6 +14,7 @@ metadata/_edit_lock_ = true
 
 [node name="ExamplePlayer" parent="." instance=ExtResource("1_sy3oh")]
 position = Vector2(-352, -128)
+corner_correction_amount = 48
 
 [node name="Blocks" type="Node2D" parent="."]
 
@@ -40,7 +41,7 @@ texture = ExtResource("2_058o2")
 shape = SubResource("RectangleShape2D_0xm2m")
 
 [node name="StaticBody2D3" type="StaticBody2D" parent="Blocks"]
-position = Vector2(-96, 64)
+position = Vector2(-96, 56)
 metadata/_edit_group_ = true
 
 [node name="Sprite2D" type="Sprite2D" parent="Blocks/StaticBody2D3"]
@@ -73,7 +74,7 @@ texture = ExtResource("2_058o2")
 shape = SubResource("RectangleShape2D_0xm2m")
 
 [node name="StaticBody2D6" type="StaticBody2D" parent="Blocks"]
-position = Vector2(-480, -64)
+position = Vector2(-480, -29)
 metadata/_edit_group_ = true
 
 [node name="Sprite2D" type="Sprite2D" parent="Blocks/StaticBody2D6"]

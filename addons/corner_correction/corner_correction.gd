@@ -1,7 +1,15 @@
-class_name CornerCorrection extends Node
+class_name CornerCharacter2D extends CharacterBody2D
 
-## Corner Correction Node
+## Corner Corrected character body 2D
 
+
+# because this is a class, it is nullable
+## This is nullable vector2, use `.value` to get the `Vector2`
+class Vector2OrNull:
+	var value: Vector2
+
+	func _init(vec: Vector2) -> void:
+		value = vec
 
 ## Maximum normal angle at which we will still corner correct.
 ## So if it is `0.1` and we hit something with normal `(0.1, 0.9)`,
@@ -12,11 +20,8 @@ const norm_angle_max := 0.1
 ## and he hits corner of something to hit right (platform), should he:
 ## - hit it and just fall down, because he was moving mostly down (false)
 ## - corner correct and keep moving right, because he ignores bottom (true)
-## by default or if there was no ignoring he would just hit it and fall down (false)
-var ignore_is_special = false
-
-## The character to move
-@export var character: CharacterBody2D
+## by default it is `true`
+var ignore_is_special = true
 
 ## How much we can corner correct, in pixels.
 ## If it is 8, player can only move 8 pixels at maximum to corner correct.
@@ -24,56 +29,37 @@ var ignore_is_special = false
 @export var corner_correction_amount: int = 8
 
 ## Sides that will not have any corner correction.
-## For platformer games, you might want to ignore bottom (IgnoreSides = [Vector2.Down])
+## For platformer games, you might want to ignore bottom (ignore_sides = [SIDE_BOTTOM])
 ## so player does not fall down when he lands on an edge of a platform
 @export var ignore_sides: Array[Side] = []
 
 ## This method behaves almost the same as `move_and_slide` but with corner correction
 ## It will use `velocity` to calculate movement
 func move_and_slide_corner(delta: float) -> void:
-	# move regularly
-	var collision = move_and_collide_corner(character.velocity * delta)
+	var delta_vel = velocity * delta
 
+	# if we can corner correct, do it
+	if corner_correct(move_and_collide(delta_vel, true), delta_vel, true):
+		# corner_correct(move_and_collide(delta_vel), delta_vel)
+		move_and_collide_corner(delta_vel)
+	else:
+		move_and_slide()
+
+
+## This method corner corrects collision
+## - collision: a collision to corner correct
+## - motion: a motion that resulted in the collision, it is used to determine whether we should corner correct
+## - test_only: if `true`, don't move the player
+## returns `true` if the player could be corrected
+func corner_correct(collision: KinematicCollision2D, motion: Vector2, test_only := false) -> bool:
 	if collision == null:
-		return
-	
-	# Get the velocity that we still need to move, with delta applied
-	character.velocity = collision.get_remainder()
-
-	# for some reason move and slide does not work properly if i move character position
-
-	# velocity /= delta
-	# character.move_and_slide()
-
-	# you need the loop in case of slopes
-	const max_slides = 4
-	var slide_count = 0
-	while (character.velocity.length_squared() > 0.001 and slide_count < max_slides):
-		var _collision = character.move_and_collide(character.velocity)
-		if _collision == null:
-			break
-
-		# Slide along the collision normal
-		var normal = _collision.get_normal()
-		character.velocity = character.velocity.slide(normal)
-		slide_count += 1
-
-## This method works almost exactly the same as `move_and_collide`
-## It modifies `position`, and uses `move_and_collide`
-## - motion: Characters motion, for frame independence use `delta`
-## - test_only: If true, don't actually move the player
-func move_and_collide_corner(motion: Vector2, test_only := false) -> KinematicCollision2D:
-	var collision = character.move_and_collide(motion, test_only)
-
-	#region checking if we should corner correct
-	if collision == null:
-		return null
+		return false
 
 	var normal = collision.get_normal()
 
 	# if we hit something diagonally, dont corner correct
 	if is_diagonal(normal):
-		return collision
+		return false
 
 	# the direction of the collision
 	var direction = normal.round() * -1
@@ -87,9 +73,9 @@ func move_and_collide_corner(motion: Vector2, test_only := false) -> KinematicCo
 		var ignore_vec: Vector2 = side_to_vec(ignore)
 
 		if ignore_vec == direction:
-			return collision
+			return false
 
-		# this is the only place where we use `IgnoreIsSpecial`
+		# this is the only place where we use `ignore_is_special`
 		if ignore_is_special:
 			# basically, if we ignore our current logical movement, but we also were moving slightly diagonally
 			# then we say the other way we were moving will be the main way we were moving
@@ -110,7 +96,7 @@ func move_and_collide_corner(motion: Vector2, test_only := false) -> KinematicCo
 	# if we hit something, but we were not going that direction, dont corner correct
 	# so if we were moving top, and very slightly left, we only want corner correct to the top
 	if direction != logical_motion:
-		return collision
+		return false
 
 	# logical motion is (±1, 0) or (0, ±1)
 	assert(logical_motion.length_squared() == 1)
@@ -118,52 +104,75 @@ func move_and_collide_corner(motion: Vector2, test_only := false) -> KinematicCo
 	#endregion
 
 	#region actually corner correcting
-	var successful_correction = _wiggle(corner_correction_amount, normal, test_only)
+	var trans = global_transform
 
-	if not successful_correction:
-		return collision
+	if test_only:
+		trans.origin += collision.get_travel()
 
-	return move_and_collide_corner(collision.get_remainder(), test_only);
+	var corrected_pos = _wiggle(trans, corner_correction_amount, normal)
+
+	if corrected_pos == null:
+		return false
+
+	if !test_only:
+		global_position = corrected_pos.value
+		move_and_collide_corner(collision.get_remainder());
+
+	return true
 	#endregion
 
-## This method will move back and forth the player by no more that `range`
+
+## This method works almost exactly the same as `move_and_collide`
+## It modifies `position`, and uses `move_and_collide`
+## - motion: Characters motion, for frame independence use `delta`
+## - test_only: If true, don't actually move the player
+func move_and_collide_corner(motion: Vector2, test_only := false) -> KinematicCollision2D:
+	var collision = move_and_collide(motion, test_only)
+
+	if corner_correct(collision, motion):
+		return null
+	else:
+		return collision
+
+
+## This method will pretend moving back and forth the player by no more that `range`.
+## It has no side effects
+## - from: the player global transform
 ## - range: maximum movement that could be performed
-## - normal: normal of the collision (`KinematicCollision2D.GetNormal()`)
-## - test_only: if `true`, do not actually move the player
-## returns `true` if the player could be moved to a valid position
-func _wiggle(range: int, norm: Vector2, test_only := false) -> bool:
+## - normal: normal of the collision (`KinematicCollision2D.get_normal()`)
+## returns `Vector2OrNull` of player position, or `null` if it was not found
+func _wiggle(from: Transform2D, range: int, norm: Vector2) -> Vector2OrNull:
 	# Axis on which we will be moving
 	var v = norm.rotated(deg_to_rad(90))
 
 	for i in range + 1:
 		for move: Vector2 in [v * i, v * -i]:
-			if check_if_works(move, -norm):
-				if not test_only:
-					character.position += move
-				return true
+			if check_if_works(from, move, -norm):
+				return Vector2OrNull.new(global_position + move)
 	
-	return false
+	return null
 
 ## Checks if the `init_motion` results in player being able
-## to move with `checkMovement` without any collisions
+## to move with `check_motion` without any collisions
 ## This method has no side effects (does not modify anything)
+## - from: the player global transform
 ## - init_motion: The initial motion to perform
 ## check_motion - The motion that player should be able to do from the `init_motion`
 ## 
 ## returns `true` if player can do `check_movement` without collision after applying the `init_movement`
 ## or `false` if player collides when trying to do `check_movement` after `init_movement`
-func check_if_works(init_motion: Vector2, check_motion: Vector2) -> bool:
-	var transform = character.global_transform
+func check_if_works(from: Transform2D, init_motion: Vector2, check_motion: Vector2) -> bool:
+	# var trans = global_transform
 	# if we cannot move to the initial position, then this does not work
-	if character.test_move(transform, init_motion):
+	if test_move(from, init_motion):
 		return false
 
 	# move to the initial position
 	# origin is basically Position
-	transform.origin += init_motion
+	from.origin += init_motion
 
 	# return whether there was no collision
-	return not character.test_move(transform, check_motion)
+	return not test_move(from, check_motion)
 
 ## convert `Side` to `Vector2`, so `SIDE_TOP` is `Vector2.UP`
 func side_to_vec(side: Side) -> Vector2:

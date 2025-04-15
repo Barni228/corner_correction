@@ -1,10 +1,7 @@
-extends CharacterBody2D
-
+extends CornerCharacter2D
 
 const SPEED = 300.0
 const JUMP_VELOCITY = -400.0
-
-@onready var corner_correction: CornerCorrection = $CornerCorrection
 
 func _physics_process(delta: float) -> void:
 	# Add the gravity.
@@ -24,5 +21,4 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 
 	# will move and slide, but als corner correct
-	# move_and_slide()
-	corner_correction.move_and_slide_corner(delta)
+	move_and_slide_corner(delta)
