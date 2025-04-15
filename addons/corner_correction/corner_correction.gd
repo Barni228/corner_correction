@@ -3,6 +3,15 @@ class_name CornerCharacter2D extends CharacterBody2D
 ## Corner Corrected character body 2D
 
 
+## this contains a KinematicCollision2D, and bool of whether it corner corrected or no
+class CornerCorrectionResult:
+	var corrected: bool
+	var collision: KinematicCollision2D
+
+	func _init(p_corrected, p_collision) -> void:
+		corrected = p_corrected
+		collision = p_collision
+
 # because this is a class, it is nullable
 ## This is nullable vector2, use `.value` to get the `Vector2`
 class Vector2OrNull:
@@ -39,27 +48,30 @@ func move_and_slide_corner(delta: float) -> void:
 	var delta_vel = velocity * delta
 
 	# if we can corner correct, do it
-	if corner_correct(move_and_collide(delta_vel, true), delta_vel, true):
-		# corner_correct(move_and_collide(delta_vel), delta_vel)
-		move_and_collide_corner(delta_vel)
+	if move_and_correct(delta_vel, true).corrected:
+		move_and_correct(delta_vel)
+
+	# otherwise use move and slide
 	else:
 		move_and_slide()
 
 
-## This method corner corrects collision
-## - collision: a collision to corner correct
-## - motion: a motion that resulted in the collision, it is used to determine whether we should corner correct
-## - test_only: if `true`, don't move the player
-## returns `true` if the player could be corrected
-func corner_correct(collision: KinematicCollision2D, motion: Vector2, test_only := false) -> bool:
+## This method works almost exactly the same as `move_and_collide`
+## It modifies `global_position`, and uses `move_and_collide`
+## - motion: Characters motion, for frame independence multiply by `delta`
+## - test_only: If true, don't actually move the player
+## returns `true` if it corner corrected, AND the `KinematicCollision2D`
+func move_and_correct(motion: Vector2, test_only := false) -> CornerCorrectionResult:
+	var collision = move_and_collide(motion, test_only)
+
 	if collision == null:
-		return false
+		return CornerCorrectionResult.new(false, null)
 
 	var normal = collision.get_normal()
 
 	# if we hit something diagonally, dont corner correct
 	if is_diagonal(normal):
-		return false
+		return CornerCorrectionResult.new(false, collision)
 
 	# the direction of the collision
 	var direction = normal.round() * -1
@@ -73,7 +85,7 @@ func corner_correct(collision: KinematicCollision2D, motion: Vector2, test_only 
 		var ignore_vec: Vector2 = side_to_vec(ignore)
 
 		if ignore_vec == direction:
-			return false
+			return CornerCorrectionResult.new(false, collision)
 
 		# this is the only place where we use `ignore_is_special`
 		if ignore_is_special:
@@ -96,11 +108,10 @@ func corner_correct(collision: KinematicCollision2D, motion: Vector2, test_only 
 	# if we hit something, but we were not going that direction, dont corner correct
 	# so if we were moving top, and very slightly left, we only want corner correct to the top
 	if direction != logical_motion:
-		return false
+		return CornerCorrectionResult.new(false, collision)
 
 	# logical motion is (±1, 0) or (0, ±1)
 	assert(logical_motion.length_squared() == 1)
-
 	#endregion
 
 	#region actually corner correcting
@@ -112,27 +123,21 @@ func corner_correct(collision: KinematicCollision2D, motion: Vector2, test_only 
 	var corrected_pos = _wiggle(trans, corner_correction_amount, normal)
 
 	if corrected_pos == null:
-		return false
+		return CornerCorrectionResult.new(false, collision)
 
 	if !test_only:
 		global_position = corrected_pos.value
-		move_and_collide_corner(collision.get_remainder());
 
-	return true
-	#endregion
+	return CornerCorrectionResult.new(true, move_and_correct(collision.get_remainder(), test_only).collision)
 
-
-## This method works almost exactly the same as `move_and_collide`
-## It modifies `position`, and uses `move_and_collide`
-## - motion: Characters motion, for frame independence use `delta`
+## This method works almost exactly the same as `move_and_collide`.
+## See `move_and_correct` (this method just uses that but only returns the collision)
+## It modifies `global_position`, and uses `move_and_collide`
+## - motion: Characters motion, for frame independence multiply by `delta`
 ## - test_only: If true, don't actually move the player
+## returns collision object
 func move_and_collide_corner(motion: Vector2, test_only := false) -> KinematicCollision2D:
-	var collision = move_and_collide(motion, test_only)
-
-	if corner_correct(collision, motion):
-		return null
-	else:
-		return collision
+	return move_and_correct(motion, test_only).collision
 
 
 ## This method will pretend moving back and forth the player by no more that `range`.
