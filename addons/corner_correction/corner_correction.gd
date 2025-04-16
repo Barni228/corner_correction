@@ -9,7 +9,7 @@ class CornerCorrectionResult:
 	var collision: KinematicCollision2D
 	var new_pos: Vector2
 
-	func _init(p_corrected, p_collision, p_new_pos) -> void:
+	func _init(p_corrected: bool, p_collision: KinematicCollision2D, p_new_pos: Vector2) -> void:
 		corrected = p_corrected
 		collision = p_collision
 		new_pos = p_new_pos
@@ -32,7 +32,7 @@ const norm_angle_max := 0.1
 ## - hit it and just fall down, because he was moving mostly down (false)
 ## - corner correct and keep moving right, because he ignores bottom (true)
 ## by default it is `true`
-var ignore_is_special = true
+var ignore_is_special := true
 
 ## How much we can corner correct, in pixels.
 ## If it is 8, player can only move 8 pixels at maximum to corner correct.
@@ -48,7 +48,7 @@ var ignore_is_special = true
 ## It will use `velocity` to calculate movement
 func move_and_slide_corner(delta: float) -> void:
 	# if we can corner correct, do it
-	var corner_correct_result = move_and_correct(velocity * delta, true)
+	var corner_correct_result := move_and_correct(velocity * delta, true)
 	if corner_correct_result.corrected:
 		global_position = corner_correct_result.new_pos
 
@@ -66,28 +66,28 @@ func move_and_slide_corner(delta: float) -> void:
 ## - collision: collision that could not be corner corrected (if corrected is true this is null)
 ## - new_pos: if `test_only` is true, this is APPROXIMATELY where the player would be if it was false
 func move_and_correct(motion: Vector2, test_only := false) -> CornerCorrectionResult:
-	var from = global_transform
+	var from := global_transform
 
-	var collision = move_and_collide(motion, test_only)
+	var collision := move_and_collide(motion, test_only)
 
 	if collision == null:
 		return CornerCorrectionResult.new(false, null, from.origin)
 
 	from.origin += collision.get_travel()
 
-	var normal = collision.get_normal()
+	var normal := collision.get_normal()
 
 	# if we hit something diagonally, dont corner correct
 	if is_diagonal(normal):
 		return CornerCorrectionResult.new(false, collision, from.origin)
 
 	# the direction of the collision
-	var direction = normal.round() * -1
+	var direction := normal.round() * -1
 	# we are sure that direction is either (±1, 0) or (0, ±1)
 	assert(direction.length_squared() == 1)
 
 	# direction that player was going, integer only
-	var logical_motion = normalize_sum_1(motion).round()
+	var logical_motion := normalize_sum_1(motion).round()
 
 	for ignore: Side in ignore_sides:
 		var ignore_vec: Vector2 = side_to_vec(ignore)
@@ -123,7 +123,7 @@ func move_and_correct(motion: Vector2, test_only := false) -> CornerCorrectionRe
 	#endregion
 
 	#region actually corner correcting
-	var corrected_pos = _wiggle(from, corner_correction_amount, normal)
+	var corrected_pos := _wiggle(from, corner_correction_amount, normal)
 
 	if corrected_pos == null:
 		return CornerCorrectionResult.new(false, collision, from.origin)
@@ -162,9 +162,9 @@ func move_and_collide_corner(motion: Vector2, test_only := false) -> KinematicCo
 ## returns `Vector2OrNull` of player position, or `null` if it was not found
 func _wiggle(from: Transform2D, range: int, norm: Vector2) -> Vector2OrNull:
 	# Axis on which we will be moving
-	var v = norm.rotated(deg_to_rad(90))
+	var v := norm.rotated(deg_to_rad(90))
 
-	for i in range + 1:
+	for i: int in range + 1:
 		for move: Vector2 in [v * i, v * -i]:
 			if check_if_works(from, move, -norm):
 				return Vector2OrNull.new(global_position + move)
@@ -181,7 +181,6 @@ func _wiggle(from: Transform2D, range: int, norm: Vector2) -> Vector2OrNull:
 ## returns `true` if player can do `check_movement` without collision after applying the `init_movement`
 ## or `false` if player collides when trying to do `check_movement` after `init_movement`
 func check_if_works(from: Transform2D, init_motion: Vector2, check_motion: Vector2) -> bool:
-	# var trans = global_transform
 	# if we cannot move to the initial position, then this does not work
 	if test_move(from, init_motion):
 		return false
