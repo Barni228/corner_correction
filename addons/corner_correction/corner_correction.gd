@@ -7,10 +7,12 @@ class_name CornerCharacter2D extends CharacterBody2D
 class CornerCorrectionResult:
 	var corrected: bool
 	var collision: KinematicCollision2D
+	var new_pos: Vector2
 
-	func _init(p_corrected, p_collision) -> void:
+	func _init(p_corrected, p_collision, p_new_pos) -> void:
 		corrected = p_corrected
 		collision = p_collision
+		new_pos = p_new_pos
 
 # because this is a class, it is nullable
 ## This is nullable vector2, use `.value` to get the `Vector2`
@@ -45,11 +47,10 @@ var ignore_is_special = true
 ## This method behaves almost the same as `move_and_slide` but with corner correction
 ## It will use `velocity` to calculate movement
 func move_and_slide_corner(delta: float) -> void:
-	var delta_vel = velocity * delta
-
 	# if we can corner correct, do it
-	if move_and_correct(delta_vel, true).corrected:
-		move_and_correct(delta_vel)
+	var corner_correct_result = move_and_correct(velocity * delta, true)
+	if corner_correct_result.corrected:
+		global_position = corner_correct_result.new_pos
 
 	# otherwise use move and slide
 	else:
@@ -59,19 +60,26 @@ func move_and_slide_corner(delta: float) -> void:
 ## This method works almost exactly the same as `move_and_collide`
 ## It modifies `global_position`, and uses `move_and_collide`
 ## - motion: Characters motion, for frame independence multiply by `delta`
-## - test_only: If true, don't actually move the player
-## returns `true` if it corner corrected, AND the `KinematicCollision2D`
+## - test_only: If `true`, dont actually move the player
+## returns `CornerCorrectionResult` with:
+## - corrected: `true` if this function corner corrected
+## - collision: collision that could not be corner corrected (if corrected is true this is null)
+## - new_pos: if `test_only` is true, this is APPROXIMATELY where the player would be if it was false
 func move_and_correct(motion: Vector2, test_only := false) -> CornerCorrectionResult:
+	var from = global_transform
+
 	var collision = move_and_collide(motion, test_only)
 
 	if collision == null:
-		return CornerCorrectionResult.new(false, null)
+		return CornerCorrectionResult.new(false, null, from.origin)
+
+	from.origin += collision.get_travel()
 
 	var normal = collision.get_normal()
 
 	# if we hit something diagonally, dont corner correct
 	if is_diagonal(normal):
-		return CornerCorrectionResult.new(false, collision)
+		return CornerCorrectionResult.new(false, collision, from.origin)
 
 	# the direction of the collision
 	var direction = normal.round() * -1
@@ -85,7 +93,7 @@ func move_and_correct(motion: Vector2, test_only := false) -> CornerCorrectionRe
 		var ignore_vec: Vector2 = side_to_vec(ignore)
 
 		if ignore_vec == direction:
-			return CornerCorrectionResult.new(false, collision)
+			return CornerCorrectionResult.new(false, collision, from.origin)
 
 		# this is the only place where we use `ignore_is_special`
 		if ignore_is_special:
@@ -108,27 +116,33 @@ func move_and_correct(motion: Vector2, test_only := false) -> CornerCorrectionRe
 	# if we hit something, but we were not going that direction, dont corner correct
 	# so if we were moving top, and very slightly left, we only want corner correct to the top
 	if direction != logical_motion:
-		return CornerCorrectionResult.new(false, collision)
+		return CornerCorrectionResult.new(false, collision, from.origin)
 
 	# logical motion is (±1, 0) or (0, ±1)
 	assert(logical_motion.length_squared() == 1)
 	#endregion
 
 	#region actually corner correcting
-	var trans = global_transform
-
-	if test_only:
-		trans.origin += collision.get_travel()
-
-	var corrected_pos = _wiggle(trans, corner_correction_amount, normal)
+	var corrected_pos = _wiggle(from, corner_correction_amount, normal)
 
 	if corrected_pos == null:
-		return CornerCorrectionResult.new(false, collision)
+		return CornerCorrectionResult.new(false, collision, from.origin)
+
+	from.origin = corrected_pos.value
 
 	if !test_only:
 		global_position = corrected_pos.value
+		# if you uncomment this line, when test_only is true return values are different
+		# but the player will move the remaining movement instead of skipping it
+		# I UNCOMMENTED IT, SO BE AWARE
+		move_and_correct(collision.get_remainder())
+		# ^^^ THIS IS THE LINE ^^^
 
-	return CornerCorrectionResult.new(true, move_and_correct(collision.get_remainder(), test_only).collision)
+	return CornerCorrectionResult.new(
+		true,
+		null,
+		from.origin,
+	)
 
 ## This method works almost exactly the same as `move_and_collide`.
 ## See `move_and_correct` (this method just uses that but only returns the collision)
