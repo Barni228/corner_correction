@@ -1,12 +1,14 @@
 ## Description
 
-This plugin adds `CornerCorrection` Node.
-The `CornerCorrection` node will take reference to player, and give you movement methods that work almost the same as default move_and_slide or move_and_collide, but they also corner correct whenever player hits a corner of something.
+This plugin adds `CornerCharacter2D` Node.
+The `CornerCharacter2D` inherits from `CharacterBody2D` and adds movement functions (`move_and_slide_corner`,
+`move_and_collide_corner`) that work like the default `move_and_slide` and `move_and_collide`
+functions, but with corner correction applied.
 
-## Documentation
+## Examples
 
-Just add `CornerCorrection` Node as child of your CharacterBody2D, configure it
-and from the character call whatever movement method you want.
+check the `examples/` directory for examples on how to use this plugin
+You can also look at `test/resources/` for another player implementation
 
 ## Testing
 
