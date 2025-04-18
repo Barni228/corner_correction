@@ -1,3 +1,5 @@
+For a C# version of this plugin, see: [Corner Correction C#](https://github.com/Barni228/corner_correction_cs)
+
 ## Description
 
 This plugin adds `CornerCharacter2D` Node.
