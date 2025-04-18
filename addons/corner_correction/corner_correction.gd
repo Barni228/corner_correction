@@ -3,7 +3,7 @@ class_name CornerCharacter2D extends CharacterBody2D
 ## Corner Corrected character body 2D
 
 
-## this contains a KinematicCollision2D, and bool of whether it corner corrected or no
+## this contains a KinematicCollision2D, bool of whether it corner corrected or no, and new player position
 class CornerCorrectionResult:
 	var corrected: bool
 	var collision: KinematicCollision2D
@@ -31,7 +31,7 @@ const norm_angle_max := 0.1
 ## and he hits corner of something to hit right (platform), should he:
 ## - hit it and just fall down, because he was moving mostly down (false)
 ## - corner correct and keep moving right, because he ignores bottom (true)
-## by default it is `true`
+## The default value is `true`
 var ignore_is_special := true
 
 ## How much we can corner correct, in pixels.
@@ -120,7 +120,6 @@ func move_and_correct(motion: Vector2, test_only := false) -> CornerCorrectionRe
 
 	# logical motion is (±1, 0) or (0, ±1)
 	assert(logical_motion.length_squared() == 1)
-	#endregion
 
 	#region actually corner correcting
 	var corrected_pos := _wiggle(from, corner_correction_amount, normal)
@@ -154,7 +153,7 @@ func move_and_collide_corner(motion: Vector2, test_only := false) -> KinematicCo
 	return move_and_correct(motion, test_only).collision
 
 
-## This method will pretend moving back and forth the player by no more that `range`.
+## This method will pretend moving back and forth the player by no more than `range`.
 ## It has no side effects
 ## - from: the player global transform
 ## - range: maximum movement that could be performed
@@ -176,7 +175,7 @@ func _wiggle(from: Transform2D, range: int, norm: Vector2) -> Vector2OrNull:
 ## This method has no side effects (does not modify anything)
 ## - from: the player global transform
 ## - init_motion: The initial motion to perform
-## check_motion - The motion that player should be able to do from the `init_motion`
+## - check_motion: The motion that player should be able to do from the `init_motion`
 ## 
 ## returns `true` if player can do `check_movement` without collision after applying the `init_movement`
 ## or `false` if player collides when trying to do `check_movement` after `init_movement`
